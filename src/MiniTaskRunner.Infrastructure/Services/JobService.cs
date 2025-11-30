@@ -34,7 +34,7 @@ public class JobService : IJobService
         return job.Id;
     }
 
-    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
+    /*public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
     {
         // Atomic fetch using a transaction
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
@@ -57,7 +57,28 @@ public class JobService : IJobService
         await tx.CommitAsync(ct);
 
         return job;
-    }
+    }*/
+
+    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
+{
+    var job = await _db.Jobs
+        .Where(j => j.Status == JobStatus.Pending &&
+                    (j.ScheduledAt == null || j.ScheduledAt <= DateTime.UtcNow))
+        .OrderBy(j => j.Priority)
+        .ThenBy(j => j.ScheduledAt)
+        .ThenBy(j => j.CreatedAt)
+        .FirstOrDefaultAsync(ct);
+
+    if (job == null)
+        return null;
+
+    job.Status = JobStatus.Processing;
+    job.LastAttemptAt = DateTime.UtcNow;
+
+    await _db.SaveChangesAsync(ct);
+
+    return job;
+}
 
     public async Task MarkSucceededAsync(Guid jobId, CancellationToken ct = default)
     {
