@@ -15,7 +15,10 @@ var http = new HttpClient { BaseAddress = new Uri(config.ApiBaseUrl) };
 // Register handlers
 var handlers = new List<IJobHandler>
 {
-    new EmailJobHandler()
+    new EmailJobHandler(),
+    new SmsJobHandler(),
+    new WebhookJobHandler(),
+    new ReportGenerationHandler()
 };
 
 Console.WriteLine($"Worker started. ID = {config.WorkerId}");
