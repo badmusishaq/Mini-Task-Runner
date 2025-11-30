@@ -21,6 +21,7 @@ public class Job
     public string Type { get; set; } = default!;
     public string Payload { get; set; } = default!;
     public JobStatus Status { get; set; } = JobStatus.Pending;
+    public int Priority { get; set; } = 0;
     public int AttemptCount { get; set; } = 0;
     public int MaxAttempts { get; set; } = 5;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
