@@ -1,18 +1,19 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MiniTaskRunner.Core.Abstractions;
 using MiniTaskRunner.Core.Domain;
 using MiniTaskRunner.Infrastructure.Persistence;
-
-namespace MiniTaskRunner.Infrastructure.Services;
+using System.Text.Json;
 
 public class JobService : IJobService
 {
     private readonly JobDbContext _db;
+    private readonly ILogger<JobService> _logger;
 
-    public JobService(JobDbContext db)
+    public JobService(JobDbContext db, ILogger<JobService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<Guid> EnqueueAsync(EnqueueJobRequest request, CancellationToken ct = default)
@@ -28,65 +29,57 @@ public class JobService : IJobService
             CreatedAt = DateTime.UtcNow
         };
 
+        _logger.LogInformation(
+            "Enqueuing job {JobId} of type {JobType} with priority {Priority} scheduled for {ScheduledAt}",
+            job.Id, job.Type, job.Priority, job.ScheduledAt);
+
         _db.Jobs.Add(job);
         await _db.SaveChangesAsync(ct);
 
         return job.Id;
     }
 
-    /*public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
+    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
     {
-        // Atomic fetch using a transaction
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        _logger.LogInformation("Worker {WorkerId} fetching next job", workerId);
 
         var job = await _db.Jobs
             .Where(j => j.Status == JobStatus.Pending &&
                         (j.ScheduledAt == null || j.ScheduledAt <= DateTime.UtcNow))
-            .OrderBy(j => j.Priority)
-            .ThenBy(j => j.ScheduledAt)
+            .OrderByDescending(j => j.Priority)
             .ThenBy(j => j.CreatedAt)
             .FirstOrDefaultAsync(ct);
 
         if (job == null)
+        {
+            _logger.LogInformation("No pending jobs available for worker {WorkerId}", workerId);
             return null;
+        }
 
         job.Status = JobStatus.Processing;
-        job.LastAttemptAt = DateTime.UtcNow;
+
+        _logger.LogInformation(
+            "Worker {WorkerId} reserved job {JobId} ({JobType})",
+            workerId, job.Id, job.Type);
 
         await _db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
-
         return job;
-    }*/
-
-    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
-{
-    var job = await _db.Jobs
-        .Where(j => j.Status == JobStatus.Pending &&
-                    (j.ScheduledAt == null || j.ScheduledAt <= DateTime.UtcNow))
-        .OrderBy(j => j.Priority)
-        .ThenBy(j => j.ScheduledAt)
-        .ThenBy(j => j.CreatedAt)
-        .FirstOrDefaultAsync(ct);
-
-    if (job == null)
-        return null;
-
-    job.Status = JobStatus.Processing;
-    job.LastAttemptAt = DateTime.UtcNow;
-
-    await _db.SaveChangesAsync(ct);
-
-    return job;
-}
+    }
 
     public async Task MarkSucceededAsync(Guid jobId, CancellationToken ct = default)
     {
         var job = await _db.Jobs.FindAsync(new object[] { jobId }, ct);
-        if (job == null) return;
+
+        if (job == null)
+        {
+            _logger.LogWarning("Attempted to mark job {JobId} as succeeded, but it was not found", jobId);
+            return;
+        }
 
         job.Status = JobStatus.Succeeded;
         job.CompletedAt = DateTime.UtcNow;
+
+        _logger.LogInformation("Job {JobId} succeeded", jobId);
 
         await _db.SaveChangesAsync(ct);
     }
@@ -94,28 +87,43 @@ public class JobService : IJobService
     public async Task MarkFailedAsync(Guid jobId, string error, CancellationToken ct = default)
     {
         var job = await _db.Jobs.FindAsync(new object[] { jobId }, ct);
-        if (job == null) return;
+
+        if (job == null)
+        {
+            _logger.LogWarning("Attempted to mark job {JobId} as failed, but it was not found", jobId);
+            return;
+        }
 
         job.AttemptCount++;
         job.LastError = error;
 
+        _logger.LogWarning(
+            "Job {JobId} failed on attempt {Attempt}. Error: {Error}",
+            jobId, job.AttemptCount, error);
+
+        // Dead-letter if max attempts reached
         if (job.AttemptCount >= job.MaxAttempts)
         {
             job.Status = JobStatus.DeadLettered;
+            job.ScheduledAt = null;
+
+            _logger.LogError(
+                "Job {JobId} moved to DeadLetter after {Attempts} attempts",
+                jobId, job.AttemptCount);
+
+            await _db.SaveChangesAsync(ct);
+            return;
         }
-        else
-        {
-            job.Status = JobStatus.Pending;
-            job.ScheduledAt = ComputeBackoff(job.AttemptCount);
-        }
+
+        // Otherwise retry with exponential backoff
+        var delaySeconds = Math.Pow(2, job.AttemptCount);
+        job.ScheduledAt = DateTime.UtcNow.AddSeconds(delaySeconds);
+        job.Status = JobStatus.Pending;
+
+        _logger.LogInformation(
+            "Job {JobId} scheduled for retry in {DelaySeconds} seconds (Attempt {Attempt})",
+            jobId, delaySeconds, job.AttemptCount);
 
         await _db.SaveChangesAsync(ct);
-    }
-
-    private static DateTime ComputeBackoff(int attempt)
-    {
-        var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
-        var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500));
-        return DateTime.UtcNow + delay + jitter;
     }
 }
