@@ -18,23 +18,59 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> GetJobs(
         [FromQuery] JobStatus? status,
         [FromQuery] string? type,
-        [FromQuery] int limit = 100)
+        [FromQuery] string? search,
+        [FromQuery] string? sortBy = "createdAt",
+        [FromQuery] string? sortDir = "desc",
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
         var query = _db.Jobs.AsQueryable();
 
+        // Filtering
         if (status.HasValue)
             query = query.Where(j => j.Status == status.Value);
 
         if (!string.IsNullOrWhiteSpace(type))
             query = query.Where(j => j.Type == type);
 
+        // Search (in payload or type)
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(j =>
+                j.Type.Contains(search) ||
+                j.Payload.Contains(search));
+
+        // Sorting
+        query = (sortBy.ToLower(), sortDir.ToLower()) switch
+        {
+            ("priority", "asc") => query.OrderBy(j => j.Priority),
+            ("priority", "desc") => query.OrderByDescending(j => j.Priority),
+
+            ("createdat", "asc") => query.OrderBy(j => j.CreatedAt),
+            ("createdat", "desc") => query.OrderByDescending(j => j.CreatedAt),
+
+            ("status", "asc") => query.OrderBy(j => j.Status),
+            ("status", "desc") => query.OrderByDescending(j => j.Status),
+
+            _ => query.OrderByDescending(j => j.CreatedAt)
+        };
+
+        // Pagination
+        var total = await query.CountAsync();
         var jobs = await query
-            .OrderByDescending(j => j.CreatedAt)
-            .Take(limit)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(jobs);
+        return Ok(new
+        {
+            total,
+            page,
+            pageSize,
+            totalPages = (int)Math.Ceiling(total / (double)pageSize),
+            jobs
+        });
     }
+
 
     [HttpGet("jobs/{id:guid}")]
     public async Task<IActionResult> GetJob(Guid id)
