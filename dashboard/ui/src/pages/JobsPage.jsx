@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 //import { getJobs } from "../api/jobs";
 import { getJobs, retryJob } from "../api/jobs";
+import JobDetailsModal from "../components/JobDetailsModal";
 
 const statusMap = {
   0: "Pending",
@@ -21,6 +22,8 @@ const getStatusColor = (status) => {
   }
 };
 
+
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
   const [page, setPage] = useState(1);
@@ -29,6 +32,7 @@ export default function JobsPage() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
+  const [selectedJob, setSelectedJob] = useState(null);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -76,27 +80,28 @@ export default function JobsPage() {
         </thead>
         <tbody>
           {jobs.map((job) => (
-            <tr key={job.id}>
-                <td>{job.type}</td>
-                <td>
-                    <span style={{
-                    padding: "0.25rem 0.5rem",
-                    borderRadius: "4px",
-                    backgroundColor: getStatusColor(job.status),
-                    color: "#fff"
-                    }}>
-                    {statusMap[job.status]}
-                    </span>
-                </td>
-                <td>{job.priority}</td>
-                <td>{new Date(job.createdAt).toLocaleString()}</td>
-                <td>
-                    {(job.status === 3 || job.status === 4) && (
-                    <button onClick={() => retryJob(job.id)}>Retry</button>
-                    )}
-                </td>
+            <tr key={job.id} onClick={() => setSelectedJob(job)} style={{ cursor: "pointer" }}>
+              <td>{job.type}</td>
+              <td>
+                <span style={{
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: "4px",
+                  backgroundColor: getStatusColor(job.status),
+                  color: "#fff"
+                }}>
+                  {statusMap[job.status]}
+                </span>
+              </td>
+              <td>{job.priority}</td>
+              <td>{new Date(job.createdAt).toLocaleString()}</td>
+              <td>
+                {(job.status === 3 || job.status === 4) && (
+                  <button onClick={(e) => { e.stopPropagation(); retryJob(job.id); }}>
+                    Retry
+                  </button>
+                )}
+              </td>
             </tr>
-
           ))}
         </tbody>
       </table>
@@ -110,6 +115,10 @@ export default function JobsPage() {
           Next
         </button>
       </div>
+
+        {selectedJob && (
+        <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
+        )}
     </div>
   );
 }
