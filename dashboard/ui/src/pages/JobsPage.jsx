@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 //import { getJobs } from "../api/jobs";
 import { getJobs, retryJob } from "../api/jobs";
 import JobDetailsModal from "../components/JobDetailsModal";
+import StatsDashboard from "../components/StatsDashboard";
+
 
 const statusMap = {
   0: "Pending",
@@ -119,6 +121,8 @@ export default function JobsPage() {
         {selectedJob && (
         <JobDetailsModal job={selectedJob} onClose={() => setSelectedJob(null)} />
         )}
+
+        <StatsDashboard jobs={jobs} />
     </div>
   );
 }
