@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,6 +15,13 @@ ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, 
 
 export default function StatsDashboard({ jobs }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Automatically open when jobs exist
+  useEffect(() => {
+    if (jobs && jobs.length > 0) {
+      setIsOpen(true);
+    }
+  }, [jobs]);
 
   if (!jobs || jobs.length === 0) return <p>No jobs to display stats.</p>;
 
@@ -72,7 +79,12 @@ export default function StatsDashboard({ jobs }) {
         }}
       >
         <span>Job Statistics</span>
-        <span style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.3s" }}>
+        <span
+          style={{
+            transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "transform 0.3s"
+          }}
+        >
           ▼
         </span>
       </h2>
