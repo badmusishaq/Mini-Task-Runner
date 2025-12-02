@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -14,6 +14,8 @@ import {
 ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale);
 
 export default function StatsDashboard({ jobs }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   if (!jobs || jobs.length === 0) return <p>No jobs to display stats.</p>;
 
   // Count jobs by type
@@ -60,13 +62,35 @@ export default function StatsDashboard({ jobs }) {
 
   return (
     <div style={{ marginTop: "2rem" }}>
-      <h2>Job Statistics</h2>
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div style={{ width: "50%" }}>
-          <Bar data={barData} />
-        </div>
-        <div style={{ width: "50%" }}>
-          <Pie data={pieData} />
+      <h2
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem"
+        }}
+      >
+        <span>Job Statistics</span>
+        <span style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.3s" }}>
+          ▼
+        </span>
+      </h2>
+
+      <div
+        style={{
+          maxHeight: isOpen ? "600px" : "0",
+          overflow: "hidden",
+          transition: "max-height 0.5s ease"
+        }}
+      >
+        <div style={{ display: "flex", gap: "2rem", marginTop: "1rem" }}>
+          <div style={{ width: "50%" }}>
+            <Bar data={barData} />
+          </div>
+          <div style={{ width: "50%" }}>
+            <Pie data={pieData} />
+          </div>
         </div>
       </div>
     </div>
