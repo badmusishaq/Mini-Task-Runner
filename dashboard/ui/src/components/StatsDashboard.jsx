@@ -67,6 +67,13 @@ export default function StatsDashboard({ jobs }) {
     ]
   };
 
+  // Build summary text
+  const totalJobs = jobs.length;
+  const summaryParts = Object.keys(statusCounts).map(
+    (s) => `${statusMap[s]}: ${statusCounts[s]}`
+  );
+  const summaryText = `Total Jobs: ${totalJobs} (${summaryParts.join(", ")})`;
+
   return (
     <div style={{ marginTop: "2rem" }}>
       <h2
@@ -88,6 +95,9 @@ export default function StatsDashboard({ jobs }) {
           ▼
         </span>
       </h2>
+
+      {/* Summary line */}
+      <p style={{ margin: "0.5rem 0", fontStyle: "italic" }}>{summaryText}</p>
 
       <div
         style={{
