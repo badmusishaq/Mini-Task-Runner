@@ -31,6 +31,17 @@ builder.Services.AddScoped<IJobService, JobService>();
 // Controllers (if you’re using [ApiController] controllers)
 builder.Services.AddControllers();
 
+// Add CORS for linking backend to frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DashboardPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -41,6 +52,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+//Enable CORS before MapController
+app.UseCors("DashboardPolicy");
 
 // Map controllers
 app.MapControllers();
