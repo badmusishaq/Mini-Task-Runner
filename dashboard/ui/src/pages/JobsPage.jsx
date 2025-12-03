@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getJobs, retryJob } from "../api/jobs";
 import JobDetailsModal from "../components/JobDetailsModal";
 import StatsDashboard from "../components/StatsDashboard";
-import AddJobCollapsible from "../components/AddJobCollapsible";
+//import AddJobCollapsible from "../components/AddJobCollapsible";
 import AddJobModal from "../components/AddJobModal";
 
 const statusMap = {
@@ -73,7 +73,7 @@ export default function JobsPage() {
       />
       
       {/* Collapsible version */}
-      <AddJobCollapsible onJobAdded={() => loadJobs()} />
+      {/*<AddJobCollapsible onJobAdded={() => loadJobs()} />*/}
 
       {/* Modal version */}
       <button onClick={() => setIsAddJobOpen(true)}>+ Add Job (Modal)</button>

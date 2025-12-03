@@ -35,8 +35,9 @@ export default function JobFormBase({ onJobAdded, onClose }) {
       await enqueueJob({ type, priority, payload: parsedPayload });
       onJobAdded();
       if (onClose) onClose(); // close collapsible or modal if provided
-    } catch {
-      alert("Invalid payload JSON or error submitting job");
+    } catch (err) {
+        console.error("Job submission failed:", err);
+        alert("Invalid payload JSON or error submitting job");
     }
   };
 
