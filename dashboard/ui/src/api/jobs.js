@@ -15,3 +15,6 @@ export const retryJob = (id) =>
 
 export const getStats = () =>
   axios.get(`${API}/stats`);
+
+export const enqueueJob = (job) =>
+  axios.post(`${API}/enqueue`, job);

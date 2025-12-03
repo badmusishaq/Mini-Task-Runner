@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { getJobs, retryJob } from "../api/jobs";
 import JobDetailsModal from "../components/JobDetailsModal";
 import StatsDashboard from "../components/StatsDashboard";
-
+import AddJobForm from "../components/AddJobForm";
+//import AddJobModal from "../components/AddJobModal";
 
 const statusMap = {
   0: "Pending",
@@ -35,6 +36,7 @@ export default function JobsPage() {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDir, setSortDir] = useState("desc");
   const [selectedJob, setSelectedJob] = useState(null);
+  const [isAddJobOpen, setIsAddJobOpen] = useState(false);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -69,7 +71,19 @@ export default function JobsPage() {
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: "1rem", padding: "0.5rem", width: "300px" }}
       />
+      
+      {/*Collapsible Add Job Form */}
+      <AddJobForm onJobAdded={() => loadJobs()} />
 
+      {/*Modal Add Job Button */}
+      <button onClick={() => setIsAddJobOpen(true)} style={{ marginBottom: "1rem" }}>
+        + Add Job (Modal)
+      </button>
+      {isAddJobOpen && (
+        <AddJobModal onClose={() => setIsAddJobOpen(false)}>
+          <AddJobForm onJobAdded={() => { loadJobs(); setIsAddJobOpen(false); }} />
+        </AddJobModal>
+      )}
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
             <tr>
