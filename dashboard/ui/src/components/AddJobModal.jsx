@@ -1,6 +1,8 @@
+// src/components/AddJobModal.jsx
 import React from "react";
+import JobFormBase from "./JobFormBase";
 
-export default function AddJobModal({ children, onClose }) {
+export default function AddJobModal({ onJobAdded, onClose }) {
   return (
     <div style={{
       position: "fixed",
@@ -21,11 +23,9 @@ export default function AddJobModal({ children, onClose }) {
         maxHeight: "80%",
         overflowY: "auto"
       }}>
-        <h2>Add Job</h2>
-        {children}
-        <button onClick={onClose} style={{ marginTop: "1rem" }}>
-          Close
-        </button>
+        <h2>Add Job (Modal)</h2>
+        <JobFormBase onJobAdded={onJobAdded} onClose={onClose} />
+        <button onClick={onClose} style={{ marginTop: "1rem" }}>Close</button>
       </div>
     </div>
   );

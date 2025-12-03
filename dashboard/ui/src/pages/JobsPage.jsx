@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getJobs, retryJob } from "../api/jobs";
 import JobDetailsModal from "../components/JobDetailsModal";
 import StatsDashboard from "../components/StatsDashboard";
-import AddJobForm from "../components/AddJobForm";
+import AddJobCollapsible from "../components/AddJobCollapsible";
 import AddJobModal from "../components/AddJobModal";
 
 const statusMap = {
@@ -72,17 +72,13 @@ export default function JobsPage() {
         style={{ marginBottom: "1rem", padding: "0.5rem", width: "300px" }}
       />
       
-      {/*Collapsible Add Job Form */}
-      <AddJobForm onJobAdded={() => loadJobs()} />
+      {/* Collapsible version */}
+      <AddJobCollapsible onJobAdded={() => loadJobs()} />
 
-      {/*Modal Add Job Button */}
-      <button onClick={() => setIsAddJobOpen(true)} style={{ marginBottom: "1rem" }}>
-        + Add Job (Modal)
-      </button>
-      {isAddJobOpen && (
-        <AddJobModal onClose={() => setIsAddJobOpen(false)}>
-          <AddJobForm onJobAdded={() => { loadJobs(); setIsAddJobOpen(false); }} />
-        </AddJobModal>
+      {/* Modal version */}
+      <button onClick={() => setIsAddJobOpen(true)}>+ Add Job (Modal)</button>
+        {isAddJobOpen && (
+        <AddJobModal onJobAdded={() => { loadJobs(); setIsAddJobOpen(false); }} onClose={() => setIsAddJobOpen(false)} />
       )}
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
