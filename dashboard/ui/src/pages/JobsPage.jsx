@@ -4,7 +4,7 @@ import { getJobs, retryJob } from "../api/jobs";
 import JobDetailsModal from "../components/JobDetailsModal";
 import StatsDashboard from "../components/StatsDashboard";
 import AddJobForm from "../components/AddJobForm";
-//import AddJobModal from "../components/AddJobModal";
+import AddJobModal from "../components/AddJobModal";
 
 const statusMap = {
   0: "Pending",
