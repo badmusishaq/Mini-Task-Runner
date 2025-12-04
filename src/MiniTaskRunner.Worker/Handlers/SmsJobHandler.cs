@@ -11,7 +11,7 @@ public class SmsJobHandler : IJobHandler
 
         Console.WriteLine($"Sending SMS to {data!.PhoneNumber}: {data.Message}");
 
-        // In real life, you'd call Twilio or another SMS provider here.
+        // Call Twilio or another SMS provider here.
 
         return Task.CompletedTask;
     }
