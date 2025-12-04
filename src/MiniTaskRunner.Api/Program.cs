@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MiniTaskRunner.Core.Abstractions;
 using MiniTaskRunner.Infrastructure.Persistence;
-//using MiniTaskRunner.Infrastructure.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -14,8 +13,6 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog();
-
-// Add services to the container.
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
