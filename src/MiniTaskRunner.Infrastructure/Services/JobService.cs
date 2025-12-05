@@ -16,7 +16,7 @@ public class JobService : IJobService
         _logger = logger;
     }
 
-    public async Task<Guid> EnqueueAsync(EnqueueJobRequest request, CancellationToken ct = default)
+    /*public async Task<Guid> EnqueueAsync(EnqueueJobRequest request, CancellationToken ct = default)
     {
         var job = new Job
         {
@@ -37,9 +37,9 @@ public class JobService : IJobService
         await _db.SaveChangesAsync(ct);
 
         return job.Id;
-    }
+    }*/
 
-    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
+    /*public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct = default)
     {
         _logger.LogInformation("Worker {WorkerId} fetching next job", workerId);
 
@@ -63,6 +63,41 @@ public class JobService : IJobService
             workerId, job.Id, job.Type);
 
         await _db.SaveChangesAsync(ct);
+        return job;
+    }*/
+
+    public async Task<Guid> EnqueueAsync(EnqueueJobRequest request, CancellationToken ct)
+    {
+        var job = new Job
+        {
+            Id = Guid.NewGuid(),
+            Type = request.Type,
+            Priority = request.Priority,
+            Payload = JsonSerializer.Serialize(request.Payload),
+            Status = JobStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _db.Jobs.Add(job);
+        await _db.SaveChangesAsync(ct);
+
+        return job.Id;
+    }
+
+    public async Task<Job?> FetchNextJobAsync(string workerId, CancellationToken ct)
+    {
+        var job = await _db.Jobs
+            .Where(j => j.Status == JobStatus.Pending)
+            .OrderByDescending(j => j.Priority)
+            .ThenBy(j => j.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        if (job != null)
+        {
+            job.Status = JobStatus.Processing;
+            await _db.SaveChangesAsync(ct);
+        }
+
         return job;
     }
 

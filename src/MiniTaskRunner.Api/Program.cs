@@ -12,15 +12,35 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+
+
 builder.Host.UseSerilog();
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+/*if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<JobDbContext>(options =>
+        options.UseInMemoryDatabase("MiniTaskRunnerDb"));
+}
+else
+{
+    builder.Services.AddDbContext<JobDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}*/
+
+
+//Configure DBContext for SQL Server
+builder.Services.AddDbContext<JobDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+/*
 // DbContext (InMemory for now; swap later for SQL Server/PostgreSQL)
 builder.Services.AddDbContext<JobDbContext>(options =>
-    options.UseInMemoryDatabase("MiniTaskRunnerDb"));
+    options.UseInMemoryDatabase("MiniTaskRunnerDb"));*/
 
 // Domain services
 builder.Services.AddScoped<IJobService, JobService>();
